@@ -7,7 +7,8 @@ import asyncio
 import discord
 from discord.utils import get
 
-TOKEN = "NzQ1MDg3NjgwNTA4OTg1NDUw.Xzsq-g.A64W8wVnmIhIR_19DdegMv59pJ0"
+from secret import CHAOS_TOKEN
+
 GUILD_ID = 591322364462104716
 ROLE_ID = 591323718660259845
 
@@ -35,4 +36,4 @@ async def repeat_task():
         await asyncio.sleep(1)
 
 if __name__ == "__main__":
-    client.run(TOKEN)
+    client.run(CHAOS_TOKEN)

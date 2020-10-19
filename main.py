@@ -7,6 +7,7 @@ import discord
 import graphing
 from common import *
 from action_timer import Timer
+from secret import TOKEN
 
 client = discord.Client()
 

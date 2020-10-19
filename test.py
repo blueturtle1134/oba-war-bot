@@ -1,6 +1,7 @@
 import discord
 
-from common import ANNOUNCEMENTS, TOKEN
+from common import ANNOUNCEMENTS
+from secret import TOKEN
 
 client = discord.Client()
 
