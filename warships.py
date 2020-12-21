@@ -5,7 +5,7 @@ from common import *
 
 ARMOR_HP = 15
 BASE_HP = 50
-SAVE_FILE = "ships.json"
+SAVE_FILE = "data/ships.json"
 
 TIME_THRESHOLD = 6 * 60 * 60
 

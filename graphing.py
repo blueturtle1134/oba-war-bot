@@ -23,7 +23,7 @@ def graph(data):
 
 
 def main():
-    data = load("fly_log.txt")
+    data = load("logs/fly_log.txt")
     graph(data).write_image("images/flylog.png")
 
 

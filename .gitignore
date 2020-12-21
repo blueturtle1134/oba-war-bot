@@ -235,13 +235,9 @@ dmypy.json
 
 # Logging and data files
 images/*
-fly_log.txt
-fly_log_1.txt
-fly.txt
-cell_table.xlsx
 words_alpha.txt
-life_record.txt
-life_log.txt
-life.json
-fly_timer.json
+data/life.json
+data/fly_timer.json
 /secret.py
+/logs/
+/data/

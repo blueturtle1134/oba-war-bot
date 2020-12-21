@@ -1,6 +1,6 @@
 import discord
 
-from common import ANNOUNCEMENTS
+from common import FORUM
 from secret import TOKEN
 
 client = discord.Client()
@@ -8,8 +8,8 @@ client = discord.Client()
 
 @client.event
 async def on_ready():
-    channel = client.get_channel(ANNOUNCEMENTS)
-    await channel.send("Reserved.")
+    channel = client.get_channel(FORUM)
+    await channel.send("Test.")
 
 
 if __name__ == "__main__":
