@@ -139,8 +139,8 @@ class State:
                 self.make_move(command)
             elif command == 4:
                 self.flip_magnet()
-            return True
-        return False
+            return COMMAND_NAME[command]
+        return None
 
     def add_command(self, text):
         text = text.strip().lower()
@@ -167,11 +167,11 @@ class State:
         self.magnet = False
         self.stack = list()
 
-    async def send_state(self, channel):
+    async def send_state(self, channel, caption=None):
         with BytesIO() as image_binary:
             self.draw().save(image_binary, 'PNG')
             image_binary.seek(0)
-            await channel.send(file=discord.File(fp=image_binary, filename='robot.png'))
+            await channel.send(content=caption, file=discord.File(fp=image_binary, filename='robot.png'))
 
 
 def dump(state):

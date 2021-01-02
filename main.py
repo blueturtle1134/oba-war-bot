@@ -23,7 +23,7 @@ last_tick = 0
 
 
 def scheduled_level():
-    return int((time.time() - 1609550602) / 129600) + 1
+    return int((time.time() - 1609603565) / 129600) + 1
 
 
 level = scheduled_level()
@@ -42,6 +42,8 @@ async def on_ready():
     client.loop.create_task(repeat_task())
     # await update_points()
     await channel.send("Bot ready")
+    channel = client.get_channel(ANSWER)
+    await robot_state.send_state(channel)
     if DEBUG:
         await channel.send("Debugging.")
 
@@ -83,9 +85,13 @@ async def on_tick():
     channel = client.get_channel(ANSWER)
     if now % 3600 < last_tick % 3600:
         # On the hour!
-        if robot_state.execute_stack():
-            await robot_state.send_state(channel)
+        stack_result = robot_state.execute_stack()
+        if stack_result is not None:
+            await robot_state.send_state(channel, f"`Executed: {stack_result}`")
         robot.dump(robot_state)
+        with open("logs/robot_log.txt", "a+") as file:
+            file.write(",".join([str(time.time())] + [str(x) for x in robot_state.points]))
+            file.write("\n")
     if scheduled_level() > level:
         # Time to change levels
         path = f"levels/robot/{level}.txt"
