@@ -54,15 +54,15 @@ class State:
         x, y = self.robot_pos
         dx, dy = DIRECTIONS[direction]
         x1, y1 = x + dx, y + dy
-        x2, y2 = x - dx, y - dy
+        adjacent = ((x, y), (x - dx, y - dy), (x + dy, y + dx), (x - dy, y - dx))
         if self.valid_coordinates(x1, y1):
             self.try_pull((x1, y1), direction)
             destination = self.board[y1][x1]
             if not SOLID[destination]:
                 self.robot_pos = x1, y1
                 if self.magnet:
-                    self.try_pull((x, y), direction)
-                    self.try_pull((x2, y2), direction)
+                    for p in adjacent:
+                        self.try_pull(p, direction)
 
     def flip_magnet(self):
         self.magnet = not self.magnet
