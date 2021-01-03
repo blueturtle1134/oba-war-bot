@@ -55,19 +55,7 @@ async def on_message(message):
         return
     channel_id = message.channel.id
     content = message.content.strip()
-    if content.lower() == "team":
-        await message.channel.send(f"You are on team {TEAM_NAMES[team_from_member(message.author)]}")
     user_time = 10800 - timer.last_action(message.author.id)
-    if content.lower() == "time":
-        if user_time < 0:
-            await message.channel.send("You may act right now!")
-        else:
-            await message.channel.send(f"{user_time / 60:.1f} min until you may act again")
-    # if content.lower() == "graph" and (message.author.id == BLUE or message.author.id == RYU):
-    #     await message.channel.send("Generating graph...")
-    #     data = graphing.load("logs/mao_log.txt")
-    #     graphing.graph(data).write_image("images/maolog.png")
-    #     await message.channel.send(file=discord.File('images/maolog.png'))
     if channel_id == ANSWER:
         if user_time > 0:
             await message.channel.send(f"{user_time / 60:.1f} min until you may act again")
@@ -77,6 +65,22 @@ async def on_message(message):
         else:
             await message.channel.send("Invalid command, try again")
         await robot_state.send_state(message.channel)
+    elif content.lower() == "team":
+        await message.channel.send(f"You are on team {TEAM_NAMES[team_from_member(message.author)]}")
+    elif content.lower() == "time":
+        if user_time < 0:
+            await message.channel.send("You may act right now!")
+        else:
+            await message.channel.send(f"{user_time / 60:.1f} min until you may act again")
+        return
+    elif content.lower() == "forecast":
+        await robot_state.send_forecast(message.channel)
+        return
+    # if content.lower() == "graph" and (message.author.id == BLUE or message.author.id == RYU):
+    #     await message.channel.send("Generating graph...")
+    #     data = graphing.load("logs/mao_log.txt")
+    #     graphing.graph(data).write_image("images/maolog.png")
+    #     await message.channel.send(file=discord.File('images/maolog.png'))
 
 
 async def on_tick():

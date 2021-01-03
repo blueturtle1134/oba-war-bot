@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import pickle
@@ -177,6 +178,14 @@ class State:
             self.draw().save(image_binary, 'PNG')
             image_binary.seek(0)
             await channel.send(content=caption, file=discord.File(fp=image_binary, filename='robot.png'))
+
+    async def send_forecast(self, channel):
+        prediction = copy.deepcopy(self)
+        stack_size = len(self.stack)
+        for _ in range(stack_size):
+            prediction.execute_stack()
+        await prediction.send_state(channel, f"After {stack_size} ticks:")
+
 
 
 def dump(state):
