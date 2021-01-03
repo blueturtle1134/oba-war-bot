@@ -23,7 +23,7 @@ last_tick = 0
 
 
 def scheduled_level():
-    return int((time.time() - 1609603565) / 129600) + 1
+    return int((time.time() - 1609644810) / 129600) + 1
 
 
 level = scheduled_level()
