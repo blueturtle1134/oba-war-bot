@@ -113,7 +113,7 @@ class State:
                 p = (x, y), (x1, y1)
                 d.rectangle(p, outline=0)
                 if tile == 1:
-                    d.rectangle(p, fill=50)
+                    d.rectangle(p, fill=(50,50,50))
                 if 2 <= tile <= 5:
                     d.ellipse(((x + 5, y + 5), (x1 - 5, y1 - 5)), fill=TEAM_COLORS[tile - 2])
                 if 6 <= tile <= 9:
