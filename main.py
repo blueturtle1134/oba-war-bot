@@ -23,7 +23,7 @@ last_tick = 0
 
 
 def scheduled_level():
-    return int((time.time() - 1609644810) / 129600) + 1
+    return int((time.time() - 1609644810) / 259200) + 1
 
 
 level = scheduled_level()
@@ -57,7 +57,7 @@ async def on_message(message):
     content = message.content.strip()
     if content.lower() == "team":
         await message.channel.send(f"You are on team {TEAM_NAMES[team_from_member(message.author)]}")
-    user_time = 21600 - timer.last_action(message.author.id)
+    user_time = 10800 - timer.last_action(message.author.id)
     if content.lower() == "time":
         if user_time < 0:
             await message.channel.send("You may act right now!")
@@ -83,8 +83,8 @@ async def on_tick():
     global last_tick, level
     now = time.time()
     channel = client.get_channel(ANSWER)
-    if now % 3600 < last_tick % 3600:
-        # On the hour!
+    if now % 1800 < last_tick % 1800:
+        # On the half hour!
         stack_result = robot_state.execute_stack()
         if stack_result is not None:
             await robot_state.send_state(channel, f"`Executed: {stack_result}`")

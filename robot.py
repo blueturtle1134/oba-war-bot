@@ -10,13 +10,14 @@ from random import Random
 # 1 = wall
 # 2, 3, 4, 5 = balls
 # 6, 7, 8, 9 = goals
+# 10 = block
 import discord
 from PIL import Image, ImageDraw, ImageFont
 
 from common import TEAM_NAMES, TEAM_COLORS
 
-SOLID = [False, True, True, True, True, True, False, False, False, False]
-MOBILE = [False, False, True, True, True, True, False, False, False, False]
+SOLID = [False, True, True, True, True, True, False, False, False, False, True]
+MOBILE = [False, False, True, True, True, True, False, False, False, False, True]
 
 DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 SQUARE_SIZE = 50
@@ -110,14 +111,18 @@ class State:
             for i, tile in enumerate(row):
                 x, y, x1, y1 = i * SQUARE_SIZE, j * SQUARE_SIZE, (i + 1) * SQUARE_SIZE, (j + 1) * SQUARE_SIZE
                 p = (x, y), (x1, y1)
-                d.rectangle(p, outline=(0, 0, 0))
+                d.rectangle(p, outline=0)
                 if tile == 1:
-                    d.rectangle(p, fill=(50, 50, 50))
+                    d.rectangle(p, fill=50)
                 if 2 <= tile <= 5:
                     d.ellipse(((x + 5, y + 5), (x1 - 5, y1 - 5)), fill=TEAM_COLORS[tile - 2])
                 if 6 <= tile <= 9:
-                    d.rectangle(p, fill=TEAM_COLORS[tile - 6], outline=(0, 0, 0))
+                    d.rectangle(p, fill=TEAM_COLORS[tile - 6], outline=0)
                     d.ellipse(((x + 5, y + 5), (x1 - 5, y1 - 5)), fill=(255, 255, 255))
+                if tile == 10:
+                    d.rectangle(p, fill=(50, 200, 50), outline=0)
+                    d.line(((x, y), (x1, y1)), fill=0)
+                    d.line(((x, y1), (x1, y)), fill=0)
         x, y = self.robot_pos
         x, y = (x + 0.5) * SQUARE_SIZE, (y + 0.5) * SQUARE_SIZE
         d.polygon(
@@ -126,7 +131,7 @@ class State:
         d.text((SQUARE_SIZE * len(self.board[0]) + 10, 10),
                "\n".join(f"{TEAM_NAMES[i]}: {self.points[i]}" for i in range(5))
                + "\n\nMAGNET: " + ("ON" if self.magnet else "OFF")
-               + f"\nNEXT TICK: {(3600 - time.time() % 3600) / 60:.0f} min"
+               + f"\nNEXT TICK: {(1800 - time.time() % 1800) / 60:.0f} min"
                + "\nSTACK:\n"
                + "\n".join(f"{i + 1}. {COMMAND_NAME[x]}" for i, x in enumerate(reversed(self.stack)))
                , fill=(0, 0, 0))
@@ -202,7 +207,6 @@ def main():
     state = State([[]], (0, 0))
     with open("levels/robot/1.txt", 'r') as file:
         state.load_board(file)
-    state.draw().show()
     dump(state)
 
 
