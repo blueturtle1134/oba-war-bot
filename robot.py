@@ -22,7 +22,7 @@ MOBILE = [False, False, True, True, True, True, False, False, False, False, True
 
 DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 SQUARE_SIZE = 50
-COMMAND_NAME = ["SOUTH", "EAST", "NORTH", "WEST", "MAGNET"]
+COMMAND_NAME = ["SOUTH", "EAST", "NORTH", "WEST", "MAGNET", "WAIT", "SKIP"]
 COMMAND_ALIAS = {
     "south": 0,
     "east": 1,
@@ -32,7 +32,9 @@ COMMAND_ALIAS = {
     "down": 0,
     "right": 1,
     "up": 2,
-    "left": 3
+    "left": 3,
+    "wait": 5,
+    "skip": 6
 }
 
 
@@ -114,7 +116,7 @@ class State:
                 p = (x, y), (x1, y1)
                 d.rectangle(p, outline=0)
                 if tile == 1:
-                    d.rectangle(p, fill=(50,50,50))
+                    d.rectangle(p, fill=(50, 50, 50))
                 if 2 <= tile <= 5:
                     d.ellipse(((x + 5, y + 5), (x1 - 5, y1 - 5)), fill=TEAM_COLORS[tile - 2])
                 if 6 <= tile <= 9:
@@ -145,6 +147,9 @@ class State:
                 self.make_move(command)
             elif command == 4:
                 self.flip_magnet()
+            elif command == 6:
+                if len(self.stack) > 0:
+                    self.stack.pop()
             return COMMAND_NAME[command]
         return None
 
@@ -187,7 +192,6 @@ class State:
         await prediction.send_state(channel, f"After {stack_size} ticks:")
 
 
-
 def dump(state):
     if not os.path.isdir("data"):
         os.mkdir("data")
@@ -217,6 +221,7 @@ def main():
     with open("levels/robot/1.txt", 'r') as file:
         state.load_board(file)
     dump(state)
+    # state.draw().show()
 
 
 if __name__ == '__main__':
