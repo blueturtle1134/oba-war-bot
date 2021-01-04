@@ -148,8 +148,8 @@ class State:
             elif command == 4:
                 self.flip_magnet()
             elif command == 6:
-                if len(self.stack) > 0:
-                    self.stack.pop()
+                if len(self.stack) > 1:
+                    self.stack = [self.stack[-1]] + self.stack[:-1]
             return COMMAND_NAME[command]
         return None
 
