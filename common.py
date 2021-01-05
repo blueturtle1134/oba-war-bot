@@ -1,4 +1,5 @@
 import random
+import time
 
 GUILD_ID = 270763719619772416
 ANSWER = 743650853986238525
@@ -16,6 +17,7 @@ RYU = 228162889062678529
 FORUM = 270763719619772416
 ANNOUNCEMENTS = 743650430810062888
 LOG = 763108528553590824
+LOBBY = 743650314233839697
 TOWER = 401200182525558785
 ALLOWED_CHANNELS = {706644963596828693,  # fallacy
                     371423137574813697,  # complaints
@@ -61,3 +63,7 @@ def get_team_name(team):
         return TEAM_NAMES[team]
     else:
         return "Cryusade"
+
+
+def scheduled_level():
+    return int((time.time() - 1609644810) / 259200) + 1, 259200 - ((time.time() - 1609644810) % 259200)

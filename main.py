@@ -7,7 +7,6 @@ import discord
 import action_timer
 import robot
 from common import *
-from robot import scheduled_level
 from secret import TOKEN
 
 client = discord.Client()
@@ -73,6 +72,9 @@ async def on_message(message):
         else:
             await message.channel.send(f"{user_time / 60:.1f} min until you may act again")
         return
+    elif content.lower() == "level":
+        current_level, next_time = scheduled_level()
+        await message.channel.send(f"Current level: {current_level}\nHours until next level: {next_time/3600:.1f}")
     elif content.lower() == "forecast":
         await robot_state.send_forecast(message.channel)
         return

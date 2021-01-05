@@ -13,9 +13,9 @@ from random import Random
 # 6, 7, 8, 9 = goals
 # 10 = block
 import discord
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
-from common import TEAM_NAMES, TEAM_COLORS
+from common import TEAM_NAMES, TEAM_COLORS, scheduled_level
 
 SOLID = [False, True, True, True, True, True, False, False, False, False, True, False]
 MOBILE = [False, False, True, True, True, True, False, False, False, False, True, False]
@@ -46,10 +46,6 @@ WALL_ALIAS = {
     "X": 10,
     "#": 11
 }
-
-
-def scheduled_level():
-    return int((time.time() - 1609644810) / 259200) + 1
 
 
 class State:
