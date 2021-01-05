@@ -1,6 +1,5 @@
 import asyncio
 import os
-import sys
 import time
 
 import discord
@@ -8,6 +7,7 @@ import discord
 import action_timer
 import robot
 from common import *
+from robot import scheduled_level
 from secret import TOKEN
 
 client = discord.Client()
@@ -20,11 +20,6 @@ last_graph = 0
 timer = action_timer.Timer("data/timer.json")
 robot_state = robot.load()
 last_tick = 0
-
-
-def scheduled_level():
-    return int((time.time() - 1609644810) / 259200) + 1
-
 
 level = scheduled_level()
 
@@ -104,6 +99,7 @@ async def on_tick():
         if robot_state.dead:
             path = f"levels/robot/{level}.txt"
             if os.path.isfile(path):
+                robot_state.points[4] += scheduled_level()
                 with open(path, 'r') as file:
                     robot_state.load_board(file)
                 await channel.send(f"Reloading board {level}")

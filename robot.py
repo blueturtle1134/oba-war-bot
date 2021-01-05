@@ -48,6 +48,10 @@ WALL_ALIAS = {
 }
 
 
+def scheduled_level():
+    return int((time.time() - 1609644810) / 259200) + 1
+
+
 class State:
     def __init__(self, board, robot_pos, magnet=False, stack=None, points=None):
         if points is None:
@@ -99,9 +103,9 @@ class State:
                 self.board[y][x] = destination
             if 6 <= destination <= 9 and 2 <= here <= 5:
                 t1, t2 = here - 2, destination - 6
-                self.points[t1] += 1
+                self.points[t1] += scheduled_level()
                 if t1 != t2:
-                    self.points[t2] += 1
+                    self.points[t2] += scheduled_level()
                 self.board[y][x] = 0
                 self.board[y1][x1] = 0
                 x2, y2 = self.pick_random()
@@ -110,7 +114,7 @@ class State:
                 self.board[y2][x2] = destination
             if destination == 11:
                 if 2 <= here <= 5:
-                    self.points[4] += 1
+                    self.points[4] += scheduled_level()
                 self.board[y][x] = 0
 
     def pick_random(self):
