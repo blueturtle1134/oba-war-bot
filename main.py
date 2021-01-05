@@ -96,9 +96,17 @@ async def on_tick():
         with open("logs/robot_log.txt", "a+") as file:
             file.write(",".join([str(time.time())] + [str(x) for x in robot_state.points]))
             file.write("\n")
+        if robot_state.dead:
+            path = f"levels/robot/{level}.txt"
+            if os.path.isfile(path):
+                with open(path, 'r') as file:
+                    robot_state.load_board(file)
+                await channel.send(f"Reloading board {level}")
+                await robot_state.send_state(channel)
+            robot.dump(robot_state)
     if scheduled_level() > level:
         # Time to change levels
-        path = f"levels/robot/{level}.txt"
+        path = f"levels/robot/{scheduled_level()}.txt"
         if os.path.isfile(path):
             with open(path, 'r') as file:
                 robot_state.load_board(file)

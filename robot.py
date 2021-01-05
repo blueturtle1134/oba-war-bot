@@ -17,8 +17,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from common import TEAM_NAMES, TEAM_COLORS
 
-SOLID = [False, True, True, True, True, True, False, False, False, False, True]
-MOBILE = [False, False, True, True, True, True, False, False, False, False, True]
+SOLID = [False, True, True, True, True, True, False, False, False, False, True, False]
+MOBILE = [False, False, True, True, True, True, False, False, False, False, True, False]
 
 DIRECTIONS = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 SQUARE_SIZE = 50
@@ -36,6 +36,12 @@ COMMAND_ALIAS = {
     "wait": 5,
     "skip": 6
 }
+WALL_ALIAS = {
+    "0": 0,
+    "1": 1,
+    "X": 10,
+    "#": 11
+}
 
 
 class State:
@@ -50,6 +56,7 @@ class State:
         self.rng = Random()
         self.stack = stack
         self.points = points
+        self.dead = False
 
     def valid_coordinates(self, x, y):
         return 0 <= x < len(self.board[0]) and 0 <= y < len(self.board)
@@ -67,6 +74,8 @@ class State:
                 if self.magnet:
                     for p in adjacent:
                         self.try_pull(p, direction)
+            if destination == 11:
+                self.dead = True
 
     def flip_magnet(self):
         self.magnet = not self.magnet
@@ -77,6 +86,9 @@ class State:
         x1, y1 = x + dx, y + dy
         if self.valid_coordinates(x, y) and self.valid_coordinates(x1, y1) and MOBILE[self.board[y][x]]:
             here = self.board[y][x]
+            destination = self.board[y1][x1]
+            if MOBILE[destination]:
+                self.try_pull((x1, y1), direction)
             destination = self.board[y1][x1]
             if destination == 0:
                 self.board[y1][x1] = self.board[y][x]
@@ -92,6 +104,10 @@ class State:
                 self.board[y2][x2] = here
                 x2, y2 = self.pick_random()
                 self.board[y2][x2] = destination
+            if destination == 11:
+                if 2 <= here <= 5:
+                    self.points[4] += 1
+                self.board[y][x] = 0
 
     def pick_random(self):
         width, height = len(self.board[0]), len(self.board)
@@ -102,7 +118,7 @@ class State:
             if self.board[y][x] == 0 and (x, y) != self.robot_pos:
                 to_check = ((x + x1, y + y1) for x1, y1 in DIRECTIONS)
                 valid = all((not self.valid_coordinates(x1, y1))
-                            or ((not 2 <= self.board[y1][x1] <= 9) and (x1, y1) != self.robot_pos) for x1, y1 in
+                            or ((not 2 <= self.board[y1][x1] <= 10) and (x1, y1) != self.robot_pos) for x1, y1 in
                             to_check)
         return x, y
 
@@ -126,6 +142,8 @@ class State:
                     d.rectangle(p, fill=(50, 200, 50), outline=0)
                     d.line(((x, y), (x1, y1)), fill=0)
                     d.line(((x, y1), (x1, y)), fill=0)
+                if tile == 11:
+                    d.rectangle(p, fill=(255, 155, 50), outline=0)
         x, y = self.robot_pos
         x, y = (x + 0.5) * SQUARE_SIZE, (y + 0.5) * SQUARE_SIZE
         d.polygon(
@@ -138,6 +156,8 @@ class State:
                + "\nSTACK:\n"
                + "\n".join(f"{i + 1}. {COMMAND_NAME[x]}" for i, x in enumerate(reversed(self.stack)))
                , fill=(0, 0, 0))
+        if self.dead:
+            image = image.convert("L")
         return image
 
     def execute_stack(self):
@@ -163,7 +183,7 @@ class State:
     def load_board(self, file):
         header = file.readline().split(" ")
         width, height = tuple(int(x) for x in header[0].split("x"))
-        self.board = [[int(y) for y in file.readline().split(" ")] for _ in range(height)]
+        self.board = [[WALL_ALIAS[y] for y in file.readline().strip()] for _ in range(height)]
         self.robot_pos = tuple(int(x) for x in header[1].split(","))
         num_goals = int(header[2])
         placement_order = [0, 1, 2, 3]
@@ -218,10 +238,12 @@ def load():
 
 def main():
     state = State([[]], (0, 0))
-    with open("levels/robot/1.txt", 'r') as file:
+    # with open("levels/robot/1.txt", 'r') as file:
+    #     state.load_board(file)
+    # dump(state)
+    with open("levels/robot/2.txt", 'r') as file:
         state.load_board(file)
-    dump(state)
-    # state.draw().show()
+    state.draw().show()
 
 
 if __name__ == '__main__':
