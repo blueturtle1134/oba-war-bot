@@ -20,7 +20,7 @@ timer = action_timer.Timer("data/timer.json")
 robot_state = robot.load()
 last_tick = 0
 
-level = scheduled_level()
+level = scheduled_level()[0]
 
 
 async def repeat_task():
@@ -101,19 +101,19 @@ async def on_tick():
         if robot_state.dead:
             path = f"levels/robot/{level}.txt"
             if os.path.isfile(path):
-                robot_state.points[4] += scheduled_level()
+                robot_state.points[4] += scheduled_level()[0]
                 with open(path, 'r') as file:
                     robot_state.load_board(file)
                 await channel.send(f"Reloading board {level}")
                 await robot_state.send_state(channel)
             robot.dump(robot_state)
-    if scheduled_level() > level:
+    if scheduled_level()[0] > level:
         # Time to change levels
-        path = f"levels/robot/{scheduled_level()}.txt"
+        path = f"levels/robot/{scheduled_level()[0]}.txt"
         if os.path.isfile(path):
             with open(path, 'r') as file:
                 robot_state.load_board(file)
-            level = scheduled_level()
+            level = scheduled_level()[0]
             await channel.send(f"Changing to board {level}")
             await robot_state.send_state(channel)
         robot.dump(robot_state)
