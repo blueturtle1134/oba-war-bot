@@ -65,6 +65,11 @@ async def on_message(message):
         else:
             await message.channel.send("Invalid command, try again")
         await robot_state.send_state(message.channel)
+    elif channel_id == TOWER:
+        if user_time > 0:
+            timer.deduct_last(message.author.id, 300)
+            if timer.last_action(message.author.id) > 10800:
+                await message.add_reaction("⏲️")
     elif content.lower() == "team":
         await message.channel.send(f"You are on team {TEAM_NAMES[team_from_member(message.author)]}")
     elif content.lower() == "time":

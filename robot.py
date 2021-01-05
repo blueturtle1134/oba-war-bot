@@ -34,7 +34,11 @@ COMMAND_ALIAS = {
     "up": 2,
     "left": 3,
     "wait": 5,
-    "skip": 6
+    "skip": 6,
+    "s": 0,
+    "e": 1,
+    "n": 2,
+    "w": 3,
 }
 WALL_ALIAS = {
     "0": 0,
