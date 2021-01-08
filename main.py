@@ -26,7 +26,7 @@ level = scheduled_level()[0]
 async def repeat_task():
     while True:
         await on_tick()
-        await asyncio.sleep(60)
+        await asyncio.sleep(30*random.random())
 
 
 @client.event
@@ -75,6 +75,8 @@ async def on_message(message):
     elif content.lower() == "level":
         current_level, next_time = scheduled_level()
         await message.channel.send(f"Current level: {current_level}\nHours until next level: {next_time/3600:.1f}")
+    elif content.lower() == "stack":
+        await message.channel.send("\n".join(robot.COMMAND_NAME[x] for x in robot_state.stack))
     elif content.lower() == "forecast":
         await robot_state.send_forecast(message.channel)
         return
