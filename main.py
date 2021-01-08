@@ -76,7 +76,8 @@ async def on_message(message):
         current_level, next_time = scheduled_level()
         await message.channel.send(f"Current level: {current_level}\nHours until next level: {next_time/3600:.1f}")
     elif content.lower() == "stack":
-        await message.channel.send("\n".join(robot.COMMAND_NAME[x] for x in robot_state.stack))
+        await message.channel.send("\n".join(str(i+1) + ". " + robot.COMMAND_NAME[x]
+                                             for i, x in enumerate(reversed(robot_state.stack))))
     elif content.lower() == "forecast":
         await robot_state.send_forecast(message.channel)
         return
