@@ -26,7 +26,7 @@ level = scheduled_level()[0]
 async def repeat_task():
     while True:
         await on_tick()
-        await asyncio.sleep(30*random.random())
+        await asyncio.sleep(3)
 
 
 @client.event
@@ -56,9 +56,10 @@ async def on_message(message):
         elif robot_state.add_command(message.content.strip()):
             timer.reset_last(message.author.id)
             robot.dump(robot_state)
+            await robot_state.send_state(message.channel, random.choice(["yiggity","uwu"]))
         else:
             await message.channel.send("Invalid command, try again")
-        await robot_state.send_state(message.channel)
+            await robot_state.send_state(message.channel)
     elif channel_id == TOWER:
         if user_time > 0:
             timer.deduct_last(message.author.id, 300)

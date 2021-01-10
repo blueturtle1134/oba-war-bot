@@ -110,7 +110,7 @@ class State:
                 self.board[y2][x2] = destination
             if destination == 11:
                 if 2 <= here <= 5:
-                    self.points[4] += scheduled_level()[0]
+                    self.points[4] += 1
                 self.board[y][x] = 0
 
     def pick_random(self):
@@ -201,6 +201,7 @@ class State:
                 self.board[y][x] = team + 6
         self.magnet = False
         self.stack = list()
+        self.dead = False
 
     async def send_state(self, channel, caption=None):
         with BytesIO() as image_binary:
