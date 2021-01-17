@@ -1,6 +1,6 @@
 import discord
 
-import robot
+from previous_events import robot
 from common import *
 from secret import TOKEN
 

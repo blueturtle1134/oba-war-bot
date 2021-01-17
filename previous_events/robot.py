@@ -218,9 +218,9 @@ class State:
 
 
 def dump(state):
-    if not os.path.isdir("data"):
-        os.mkdir("data")
-    with open("data/robot.json", 'w+') as file:
+    if not os.path.isdir("../data"):
+        os.mkdir("../data")
+    with open("../data/robot.json", 'w+') as file:
         json.dump(dict(
             board=state.board,
             pos=state.robot_pos,
@@ -228,15 +228,15 @@ def dump(state):
             stack=state.stack,
             points=state.points
         ), file)
-    with open("data/rng.pkl", 'wb+') as file:
+    with open("../data/rng.pkl", 'wb+') as file:
         pickle.dump(state.rng.getstate(), file)
 
 
 def load():
-    with open("data/robot.json", 'r') as file:
+    with open("../data/robot.json", 'r') as file:
         data = json.load(file)
         result = State(data['board'], tuple(data['pos']), data['magnet'], data['stack'], data['points'])
-    with open("data/rng.pkl", 'rb') as file:
+    with open("../data/rng.pkl", 'rb') as file:
         result.rng.setstate(pickle.load(file))
     return result
 
@@ -246,7 +246,7 @@ def main():
     # with open("levels/robot/1.txt", 'r') as file:
     #     state.load_board(file)
     # dump(state)
-    with open("levels/robot/2.txt", 'r') as file:
+    with open("../levels/robot/2.txt", 'r') as file:
         state.load_board(file)
     state.draw().show()
 

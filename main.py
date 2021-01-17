@@ -1,11 +1,10 @@
 import asyncio
 import os
-import time
 
 import discord
 
 import action_timer
-import robot
+from previous_events import robot
 from common import *
 from secret import TOKEN
 

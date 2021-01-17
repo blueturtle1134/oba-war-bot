@@ -1,8 +1,8 @@
 import random
 import re
 
-REGEX_FILE = "mao_rules.txt"
-SAVE_FILE = "data/mao.txt"
+REGEX_FILE = "../levels/mao/mao_rules.txt"
+SAVE_FILE = "../data/mao.txt"
 
 REGEXES = list()
 enacted = list()
