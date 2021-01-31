@@ -238,6 +238,7 @@ images/*
 words_alpha.txt
 data/life.json
 data/fly_timer.json
-/secret.py
+**/secret.py
 /logs/
 /data/
+**/nohup.out
