@@ -39,4 +39,8 @@ def parse_coords(coords):
     return ord(coords[0].lower()) - 97, int(coords[1:]) - 1
 
 
+def coords_to_str(coords):
+    return chr(coords[0]+97), str(coords[1]+1)
+
+
 COORDINATE_REGEX = re.compile(r"\w\d+")

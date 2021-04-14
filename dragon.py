@@ -1,7 +1,7 @@
 import random
 
 from common import TEAM_NAMES, TEAM_LETTER
-from grids import neighbors, stringify_grid, move, NORTH
+from grids import neighbors, stringify_grid, move, NORTH, coords_to_str
 import jsons
 
 KNIGHT_STEPS = dict(
@@ -30,11 +30,17 @@ class Dragon:
 
     def move(self):
         self.history.append(self.pos)
-        while len(self.history) > self.length:
-            self.history.pop(0)
         self.pos = move(self.pos, self.direction, height=len(self.__game.ownership),
                         width=len(self.__game.ownership[0]))
-        self.__game.attack(self.pos, self.team)
+        knight = self.__game.has_knight(self.pos)
+        if (knight != -1 and knight != self.team) or self.__game.has_dragon_body(self.pos) != -1:
+            self.kill()
+        else:
+            self.__game.attack(self.pos, self.team)
+
+    def update_tail(self):
+        while len(self.history) > self.length:
+            self.history.pop(0)
 
     def kill(self):
         self.pos = self.__game.hubs[self.team]
@@ -50,7 +56,7 @@ class Dragon:
 class Knight:
 
     def __init__(self, game, pos: Position, team, owner):
-        self.__game = game
+        self.__game: Game = game
         self.pos = pos
         self.team = team
         self.owner = owner
@@ -66,7 +72,7 @@ class Knight:
 class Game:
 
     def __init__(self, ownership=None, dragons: list[Dragon] = None, hubs: list[Position] = None,
-                 knights: list[Knight] = None, scores = None):
+                 knights: list[Knight] = None, scores=None):
         if ownership is None:
             ownership = [[-1] * 24 for _ in range(24)]
         if hubs is None:
@@ -82,7 +88,7 @@ class Game:
         if knights is None:
             knights = dict()
         if scores is None:
-            scores = [[0]*5 for _ in range(3)]  # Scores: Tiles, knight deaths, dragon deaths, tower deaths
+            scores = [[0] * 5 for _ in range(3)]  # Scores: Tiles, knight deaths, dragon deaths, tower captures
         for dragon in dragons:
             dragon.set_game(self)
         for knight in knights:
@@ -91,6 +97,10 @@ class Game:
         self.dragons = dragons
         self.hubs = hubs
         self.knights = knights
+        self.scores = scores
+
+    def get_ownership(self, pos):
+        return self.ownership[pos[1]][pos[0]]
 
     def expand(self, team):
         possibles = dict()
@@ -109,9 +119,21 @@ class Game:
         target = random.choices(possibles_list, weights=[possibles[x] for x in possibles_list])[0]
         self.ownership[target[1]][target[0]] = team
 
-    def occupied(self, pos):
+    def has_dragon_head(self, pos):
         for i, dragon in enumerate(self.dragons):
-            if pos in dragon.history or dragon.pos == pos:
+            if dragon.pos == pos:
+                return i
+        return -1
+
+    def has_dragon_body(self, pos):
+        for i, dragon in enumerate(self.dragons):
+            if pos in dragon.history:
+                return i
+        return -1
+
+    def has_knight(self, pos):
+        for i, knights in enumerate(self.knights.values()):
+            if knights.pos == pos:
                 return i
         return -1
 
@@ -119,7 +141,7 @@ class Game:
         if self.ownership[pos[1]][pos[0]] != team:
             self.ownership[pos[1]][pos[0]] = -1
 
-    def draw(self, territory=True, dragons=True, powerups=True):
+    def draw(self, territory=True, dragons=True, knights=True, powerups=True):
         display = [[("·" if a == -1 else (
             "+" if all(b[1] == a for b in neighbors((x, y), self.ownership)) else TEAM_NAMES[a][0].lower())) for x, a in
                     enumerate(row)] for y, row in enumerate(self.ownership)] if territory else \
@@ -133,13 +155,19 @@ class Game:
                 display[y][x] = TEAM_LETTER[dragon.team].upper()
                 for x, y in dragon.history:
                     display[y][x] = "o"
+        if knights:
+            for knight in self.knights.values():
+                x, y = knight.pos
+                display[y][x] = TEAM_LETTER[knight.team].upper()
         return stringify_grid(display)
 
     def tick(self):
         for i in random.sample([0, 1, 2], 3):
             self.expand(i)
-        for dragon in random.sample(self.dragons, len(self.dragons)):
+        for dragon in self.dragons:
             dragon.move()
+        for dragon in self.dragons:
+            dragon.update_tail()
 
     def command_dragon(self, team, direction):
         self.dragons[team].direction = direction
@@ -148,23 +176,33 @@ class Game:
         if user not in self.knights:
             self.knights[user] = Knight(game=self, pos=self.hubs[team], team=team, owner=user)
         self.knights[user].team = team
-        if movement in KNIGHT_STEPS:
+        if movement.lower() in KNIGHT_STEPS:
             dx, dy = KNIGHT_STEPS[movement.lower()]
             x, y = self.knights[user].pos
-            self.knights[user].pos = (x + dx) % 24, (y + dy) % 24
-            dragon_hit = self.occupied(self.knights[user].pos)
-            bonus = False
-            for i, dragon in enumerate(self.dragons):
-                if dragon.pos == self.knights[user].pos:
-                    dragon_hit = i
-                    bonus = True
+            dest = (x + dx) % 24, (y + dy) % 24
+            knight_landed = self.has_knight(dest)
+            if self.has_dragon_body(dest) != -1:
+                return False, "You cannot jump on a dragon!"
+            if knight_landed != -1 and knight_landed != team:
+                # Conflict!
+                for knight in self.knights.values():
+                    if knight.pos == dest and knight.team != self.get_ownership(dest):
+                        knight.kill()
+                if self.knights[user].team != self.get_ownership(dest):
+                    self.knights[user].kill()
+                    return True, "You die!"
+            self.knights[user].pos = dest
+            dragon_hit = self.has_dragon_head(self.knights[user].pos)
             if dragon_hit != -1 and dragon_hit != self.knights[user].team:
-                self.dragons[dragon_hit].length -= 2 if bonus else 1
-                if self.dragons[dragon_hit].length < 4:
+                self.dragons[dragon_hit].length -= 1
+                if self.dragons[dragon_hit].length < 2:
                     self.dragons[dragon_hit].kill()
-            return True
+                    return True, "You have slain the dragon!"
+                else:
+                    return True, "You hit the dragon!"
+            return True, f"You have moved to {coords_to_str(dest)}."
         else:
-            return False
+            return False, "That movement is invalid!"
 
 
 def main():

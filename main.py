@@ -1,13 +1,11 @@
 import asyncio
 import json
-import os
 
 import discord
 import jsons
 
 import action_timer
 import dragon
-from previous_events import robot
 from common import *
 from secret import TOKEN
 
@@ -43,7 +41,6 @@ async def on_ready():
     # await update_points()
     await channel.send("Bot ready")
     channel = client.get_channel(ANSWER)
-    await robot_state.send_state(channel)
     if DEBUG:
         await channel.send("Debugging.")
 
@@ -64,7 +61,7 @@ async def on_message(message):
             if command[0] == "dragon":
                 pass
             elif command[0] == "knight":
-
+                pass
     elif channel_id == TOWER:
         if user_time > 0:
             timer.deduct_last(message.author.id, 300)
@@ -91,7 +88,7 @@ async def on_tick():
     channel = client.get_channel(ANSWER)
     if now % TICK_TIME < last_tick % TICK_TIME:
         # On the half hour!
-
+        pass
     last_tick = now
 
 
