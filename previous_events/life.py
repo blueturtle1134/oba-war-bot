@@ -54,7 +54,7 @@ client = discord.Client()
 
 
 def save():
-    with open("../data/life.json", 'w') as file:
+    with open("data/life.json", 'w') as file:
         json.dump(dict(
             current_grid=current_grid,
             last_action=last_action,
@@ -63,7 +63,7 @@ def save():
 
 
 def load():
-    with open("../data/life.json", 'r') as file:
+    with open("data/life.json", 'r') as file:
         data = json.load(file)
     global current_grid, last_action, last_update, tick_count, next_measurement, measurement_num
     current_grid = [[tuple(x) for x in row] for row in data["current_grid"]]
@@ -201,10 +201,10 @@ def get_measurement():
 
 def log_stats():
     scores = score_grid(current_grid)
-    with open("../logs/life_log.txt", "a") as file:
+    with open("logs/life_log.txt", "a") as file:
         file.write("\n")
         file.write(" ".join([str(tick_count)] + [str(x) for x in scores]))
-    with open("../logs/life_record.txt", "a") as file:
+    with open("logs/life_record.txt", "a") as file:
         file.write("\n")
         file.write(str(tick_count) + " ")
         file.write("".join([DISPLAY[x] for row in current_grid for x in row]))
