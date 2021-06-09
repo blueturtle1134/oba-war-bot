@@ -1,12 +1,18 @@
+import asyncio
 import copy
 import datetime
 import json
+import os
 import random
 import time
 
+import discord
+
 import grids
-from common import TEAM_NAMES, team_from_member, get_notification, TEAM_ROLES, team_from_string, get_team_name
-from grids import stringify_grid
+from common import TEAM_NAMES, team_from_member, get_notification, TEAM_ROLES, team_from_string, get_team_name, \
+    ANSWER, TOWER, CATEGORY_ID, LOG
+from grids import stringify_grid, COORDINATE_REGEX
+from secret import TOKEN, SEED
 
 DISPLAY = {
     (0, 0, 0): "·",
@@ -31,7 +37,8 @@ DIRECTIONS = [
 ]
 
 TICK_PERIOD = 120
-ACTION_PERIOD = 100
+ACTION_PERIOD = 200
+TOWER_GAIN = 10
 
 current_grid = [[(0, 0, 0) for i in range(18)] for _ in range(18)]
 last_action = dict()
@@ -39,8 +46,11 @@ last_update = None
 tick_count = 0
 last_tick = time.time()
 
-random.seed(15275)
+random.seed(SEED)
 next_measurement = 0
+measurement_num = 0
+
+client = discord.Client()
 
 
 def save():
@@ -55,12 +65,14 @@ def save():
 def load():
     with open("../data/life.json", 'r') as file:
         data = json.load(file)
-    global current_grid, last_action, last_update, tick_count, next_measurement
+    global current_grid, last_action, last_update, tick_count, next_measurement, measurement_num
     current_grid = [[tuple(x) for x in row] for row in data["current_grid"]]
     last_action = data["last_action"]
     tick_count = data["tick_count"]
+    measurement_num = 0
     while next_measurement < tick_count:
-        next_measurement += generate_measurement_interval()
+        next_measurement += generate_measurement_interval(measurement_num)
+        measurement_num += 1
     print(next_measurement)
 
 
@@ -85,9 +97,16 @@ def compute_cell(current, neighbors):
         if len(live) != 3:
             return 0, 0, 0
         else:
+            if live[0] == live[1] or live[0] == live[2]:
+                return live[0]
+            if live[1] == live[2]:
+                return live[1]
             counts = [sum(x) for x in zip(*neighbors)]
             highest = max(counts)
-            return tuple([1 if x == highest else 0 for x in counts])
+            if highest == 3:
+                return tuple([1 if x == highest else 0 for x in counts])
+            else:
+                return tuple([1 if x > 0 else 0 for x in counts])
 
 
 def compute_tick(grid):
@@ -98,7 +117,8 @@ def compute_tick(grid):
 
 
 def score_grid(grid):
-    return tuple([sum(x) for x in zip(*[cell for row in grid for cell in row])])
+    return tuple([sum(x) for x in zip(*[cell for row in grid for cell in row])]), \
+           len([cell for row in grid for cell in row if cell != (0, 0, 0)])
 
 
 def validate_position(position, team):
@@ -123,8 +143,9 @@ def flip_cell(text, member):
     if not validate_position(cell, team):
         return "Your team does not have control over that cell!"
     member_id = str(member.id)
-    if member_id in last_action and get_action_timer(member_id) > 0:
-        return f"You may act again in {get_action_timer(member_id)} ticks"
+    actions_available, time_to_next = get_actions_available(member_id)
+    if actions_available < 1:
+        return f"You may act again in {time_to_next} ticks"
     if team is not None:
         cell_state = [1 if team == i else 0 for i in range(3)]
     terms = text.split(" ")
@@ -135,46 +156,45 @@ def flip_cell(text, member):
     cell_state = cell_state[0], cell_state[1], cell_state[2]
     if current_grid[y][x] == (0, 0, 0):
         current_grid[y][x] = cell_state
-        last_action[member_id] = tick_count
+        last_action[member_id] = int((last_action[member_id] + tick_count) / 2)
         return "Cell placed!"
     else:
         return "There is already a cell there."
 
 
 def display_current():
-    scores = score_grid(current_grid)
+    scores, count = score_grid(current_grid)
     return "\n```\n".join((f"Tick {tick_count} (last update {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')})",
                            stringify_grid(current_grid, DISPLAY),
-                           display_scores(scores)))
+                           display_scores(scores, count)))
 
 
-def display_scores(scores):
-    return "\n".join([f"{TEAM_NAMES[i]}: {scores[i]}" for i in range(3)])
+def display_scores(scores, count):
+    return "\n".join([f"{TEAM_NAMES[i]}: {scores[i]}" for i in range(3)]) + f"\nLive cells: {count}"
 
 
-def get_action_timer(member_id):
-    return ACTION_PERIOD - tick_count + last_action[member_id]
+def get_actions_available(member_id):
+    if member_id not in last_action:
+        last_action[member_id] = -ACTION_PERIOD
+    i, t = 0, tick_count - last_action[member_id]
+    while ACTION_PERIOD * 2 ** i < t:
+        i += 1
+    return i, ACTION_PERIOD * 2 ** i - t
 
 
 def get_time_stats(member):
     member_id = str(member.id)
     tick_string = f"\nIt is currently tick {tick_count}" \
                   f"\nNext tick in approximately {TICK_PERIOD + last_tick - time.time():.1f} seconds."
-    if member_id in last_action and get_action_timer(member_id) > 0:
-        return f"You may act again in {get_action_timer(member_id)} ticks" + tick_string
-    else:
-        return "You may act right now!" + tick_string
+    actions_available, time_to_next = get_actions_available(member_id)
+    return f"You have {actions_available} actions available, next in {time_to_next}" + tick_string
 
 
 def get_measurement():
-    scores = score_grid(current_grid)
+    scores, count = score_grid(current_grid)
     max_score = max(scores)
-    if max_score == 0:
-        winners = "Grand Thonk"
-    else:
-        winners = ", ".join([TEAM_NAMES[i] for i in range(3) if scores[i] == max_score])
+    winners = ", ".join([TEAM_NAMES[i] for i in range(3) if scores[i] == max_score or scores[i] >= count / 2])
     return f"**Measurement!**\n" \
-           f"{display_scores(scores)}\n" \
            f"Winner(s): **{winners}**\n" \
            f"{get_notification(TEAM_ROLES)}"
 
@@ -211,16 +231,19 @@ async def update_status(channel):
 
 
 def should_measure():
-    global next_measurement
+    global next_measurement, measurement_num
+    if measurement_num >= 20:
+        return False
     if next_measurement <= tick_count:
-        next_measurement += generate_measurement_interval()
+        next_measurement += generate_measurement_interval(measurement_num)
+        measurement_num += 1
         return True
     else:
         return False
 
 
-def generate_measurement_interval():
-    return random.randint(500, 750)
+def generate_measurement_interval(i):
+    return random.randint(500 - i * 15, 900 - i * 25)
 
 
 def forecast(n=1, move_text=None, team=None):
@@ -241,7 +264,7 @@ def forecast(n=1, move_text=None, team=None):
         else f"Forecast for tick {tick_count + n}:"
     return f"{header}\n" \
            f"```\n{stringify_grid(next_grid, DISPLAY)}\n```\n" \
-           f"{display_scores(score_grid(next_grid))}"
+           f"{display_scores(*score_grid(next_grid))}"
 
 
 def display_targeting(string):
@@ -256,10 +279,61 @@ def load_from_string(string):
             current_grid[i][j] = reverse_display[string[i * 18 + j]]
 
 
-def main():
-    load()
-    print(stringify_grid(current_grid, DISPLAY, 5, 6))
+async def repeat_task():
+    while True:
+        await on_tick()
+        await asyncio.sleep(TICK_PERIOD)
+
+
+@client.event
+async def on_ready():
+    channel = client.get_channel(LOG)
+    client.loop.create_task(repeat_task())
+    await channel.send("Bot ready")
+
+
+@client.event
+async def on_message(message):
+    message_content = message.content.strip().lower()
+    if message.author.bot:
+        return
+    if message.channel.id == ANSWER:
+        text = message.content.strip()
+        channel = client.get_channel(ANSWER)
+        if text.lower().startswith("time"):
+            await channel.send(get_time_stats(message.author))
+        if COORDINATE_REGEX.match(text.split(" ", 1)[0]):
+            await channel.send(flip_cell(text, message.author))
+        await update_status(channel)
+    elif message.channel.id == TOWER:
+        author_id = str(message.author.id)
+        actions_available, time_to_next = get_actions_available(author_id)
+        if author_id not in last_action:
+            last_action[author_id] = -ACTION_PERIOD
+        last_action[author_id] -= TOWER_GAIN
+        if time_to_next <= TOWER_GAIN:
+            await message.add_reaction("⏲️")
+    elif message.channel.category_id == CATEGORY_ID:
+        if message_content.startswith("target") or message_content.startswith("preview"):
+            parts = message_content.split(" ")
+            if len(parts) > 1 and COORDINATE_REGEX.match(parts[1]):
+                await message.channel.send(display_targeting(parts[1]))
+        elif message_content.startswith("forecast") or message_content.startswith("predict"):
+            parts = message_content.split(" ")
+            if len(parts) > 1 and parts[1].isdigit():
+                if len(parts) > 2 and grids.COORDINATE_REGEX.match(parts[2]):
+                    if len(parts) > 3:
+                        await message.channel.send(forecast(int(parts[1]), parts[2], team_from_string(parts[3])))
+                    else:
+                        await message.channel.send(forecast(int(parts[1]), parts[2],
+                                                            team_from_member(message.author)))
+                else:
+                    await message.channel.send(forecast(int(parts[1])))
+            else:
+                await message.channel.send(forecast())
 
 
 if __name__ == "__main__":
-    main()
+    if os.path.exists("../data/life.json"):
+        load()
+    client.run(TOKEN)

@@ -22,10 +22,15 @@ def neighbors(point, grid):
         yield (x, y), grid[y][x]
 
 
-def stringify_grid(grid, display_mapping=None, recticle_x=-1, recticle_y=-1):
-    if display_mapping is None:
+def stringify_grid(grid, _display_mapping=None, recticle_x=-1, recticle_y=-1):
+    if _display_mapping is None:
         def display_mapping(x):
             return str(x)
+    elif isinstance(_display_mapping, dict):
+        def display_mapping(x):
+            return _display_mapping[x]
+    else:
+        display_mapping = _display_mapping
     height, width = len(grid), len(grid[0])
     return "   " + " ".join([x for x in string.ascii_uppercase[0:width]]) + "\n" \
            + "\n".join(
