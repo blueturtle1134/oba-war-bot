@@ -146,7 +146,7 @@ def flip_cell(text, member):
     actions_available, time_to_next = get_actions_available(member_id)
     if actions_available < 1:
         return f"You may act again in {time_to_next} ticks"
-    if team is not None:
+    if team is not None and 0 <= team <= 2:
         cell_state = [1 if team == i else 0 for i in range(3)]
     terms = text.split(" ")
     for term in terms[1:]:
@@ -193,6 +193,8 @@ def get_time_stats(member):
 def get_measurement():
     scores, count = score_grid(current_grid)
     max_score = max(scores)
+    if max_score == 0:
+        return "**Measurement!**\nWinner(s): **Grand Thonk**\n" + get_notification(TEAM_ROLES)
     winners = ", ".join([TEAM_NAMES[i] for i in range(3) if scores[i] == max_score or scores[i] >= count / 2])
     return f"**Measurement!**\n" \
            f"Winner(s): **{winners}**\n" \
@@ -217,6 +219,8 @@ async def on_tick():
     current_grid = compute_tick(current_grid)
     save()
     log_stats()
+    channel = client.get_channel(ANSWER)
+    await update_status(channel)
 
 
 async def update_status(channel):
@@ -333,7 +337,11 @@ async def on_message(message):
                 await message.channel.send(forecast())
 
 
-if __name__ == "__main__":
-    if os.path.exists("../data/life.json"):
+def main():
+    if os.path.exists("data/life.json"):
         load()
     client.run(TOKEN)
+
+
+if __name__ == "__main__":
+    main()

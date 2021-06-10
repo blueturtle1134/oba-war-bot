@@ -1,5 +1,6 @@
 import discord
 
+from previous_events import life
 from secret import TOKEN
 
 client = discord.Client()
@@ -14,4 +15,5 @@ async def on_ready():
 
 
 if __name__ == "__main__":
-    client.run(TOKEN)
+    # client.run(TOKEN)
+    life.main()
