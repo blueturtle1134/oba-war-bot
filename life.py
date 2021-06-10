@@ -14,6 +14,8 @@ from common import TEAM_NAMES, team_from_member, get_notification, TEAM_ROLES, t
 from grids import stringify_grid, COORDINATE_REGEX
 from secret import TOKEN, SEED
 
+DATA_PATH = "data/life.json"
+
 DISPLAY = {
     (0, 0, 0): "·",
     (1, 0, 0): "C",
@@ -54,7 +56,7 @@ client = discord.Client()
 
 
 def save():
-    with open("data/life.json", 'w') as file:
+    with open(DATA_PATH, 'w') as file:
         json.dump(dict(
             current_grid=current_grid,
             last_action=last_action,
@@ -63,7 +65,7 @@ def save():
 
 
 def load():
-    with open("data/life.json", 'r') as file:
+    with open(DATA_PATH, 'r') as file:
         data = json.load(file)
     global current_grid, last_action, last_update, tick_count, next_measurement, measurement_num
     current_grid = [[tuple(x) for x in row] for row in data["current_grid"]]
@@ -337,7 +339,7 @@ async def on_message(message):
 
 
 def main():
-    if os.path.exists("data/life.json"):
+    if os.path.exists(DATA_PATH):
         load()
     client.run(TOKEN)
 
