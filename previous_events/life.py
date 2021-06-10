@@ -302,12 +302,9 @@ async def on_message(message):
     if message.author.bot:
         return
     if message.channel.id == ANSWER:
-        text = message.content.strip()
         channel = client.get_channel(ANSWER)
-        if text.lower().startswith("time"):
-            await channel.send(get_time_stats(message.author))
-        if COORDINATE_REGEX.match(text.split(" ", 1)[0]):
-            await channel.send(flip_cell(text, message.author))
+        if COORDINATE_REGEX.match(message_content.split(" ", 1)[0]):
+            await channel.send(flip_cell(message_content, message.author))
         await update_status(channel)
     elif message.channel.id == TOWER:
         author_id = str(message.author.id)
@@ -318,6 +315,8 @@ async def on_message(message):
         if time_to_next <= TOWER_GAIN:
             await message.add_reaction("⏲️")
     elif message.channel.category_id == CATEGORY_ID:
+        if message_content.startswith("time"):
+            await message.channel.send(get_time_stats(message.author))
         if message_content.startswith("target") or message_content.startswith("preview"):
             parts = message_content.split(" ")
             if len(parts) > 1 and COORDINATE_REGEX.match(parts[1]):
