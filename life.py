@@ -99,10 +99,6 @@ def compute_cell(current, neighbors):
         if len(live) != 3:
             return 0, 0, 0
         else:
-            if live[0] == live[1] or live[0] == live[2]:
-                return live[0]
-            if live[1] == live[2]:
-                return live[1]
             counts = [sum(x) for x in zip(*neighbors)]
             highest = max(counts)
             if highest == 3:
