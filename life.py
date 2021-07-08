@@ -219,8 +219,8 @@ async def on_tick():
     log_stats()
     channel = client.get_channel(ANSWER)
     await update_status(channel)
-    if should_measure():
-        await channel.send(get_measurement())
+    # if should_measure():
+    #    await channel.send(get_measurement())
 
 
 async def update_status(channel):
