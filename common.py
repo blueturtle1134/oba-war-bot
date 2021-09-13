@@ -2,8 +2,8 @@ import random
 import time
 
 GUILD_ID = 270763719619772416
-ANSWER = 743650853986238525
-# ANSWER = 747105016182997073 # test
+# ANSWER = 743650853986238525
+ANSWER = 747105016182997073 # test
 CATEGORY_ID = 743650031831351336
 CHRONSPIRACY = 795117843502333994
 IMPPERIUM = 795118009567674370
@@ -60,7 +60,7 @@ def get_notification(role_ids):
 
 
 def get_team_name(team):
-    if team in TEAM_NAMES:
+    if 0 <= team < len(TEAM_NAMES):
         return TEAM_NAMES[team]
     else:
         return "Cryusade"
@@ -68,3 +68,7 @@ def get_team_name(team):
 
 def scheduled_level():
     return int((time.time() - 1609644810) / 259200) + 1, 259200 - ((time.time() - 1609644810) % 259200)
+
+
+def print_points(point_array):
+    return "\n".join([f"{TEAM_NAMES[i]}: **{p}**" for i, p in enumerate(point_array)])
