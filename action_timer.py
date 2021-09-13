@@ -42,6 +42,9 @@ class Timer:
         self.times[user_id] = self.times[user_id] - amount
         self.save()
 
+    def reset_all(self):
+        self.times = dict()
+
 
 class BankedTimer(Timer):
     def __init__(self, save_file, cost_function, start_time):

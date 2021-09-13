@@ -1,8 +1,7 @@
 import asyncio
 
 import discord
-import action_timer
-from previous_events import life
+import hangman
 from common import *
 from secret import TOKEN
 
@@ -21,41 +20,43 @@ DEBUG = False
 # MAX_TIME = 300
 
 
-async def repeat_task():
-    while True:
-        await on_tick()
-        await asyncio.sleep(life.TICK_PERIOD)
+# async def repeat_task():
+#     while True:
+#         await on_tick()
+#         await asyncio.sleep(life.TICK_PERIOD)
 
 
 @client.event
 async def on_ready():
     channel = client.get_channel(LOG)
-    client.loop.create_task(repeat_task())
+    # client.loop.create_task(repeat_task())
     # await update_points()
     await channel.send("Bot ready")
     channel = client.get_channel(ANSWER)
+    await channel.send(hangman.display_word())
     if DEBUG:
         await channel.send("Debugging.")
 
 
 @client.event
 async def on_message(message):
-    await life.life_command(message)
     # global last_graph
-    # if message.author.bot:
-    #     return
-    # channel_id = message.channel.id
-    # content = message.content.strip()
+    if message.author.bot:
+        return
+    channel_id = message.channel.id
+    content = message.content.strip()
     # user_time = COOLDOWN - timer.last_action(message.author.id)
-    # if channel_id == ANSWER:
-    #     if user_time > 0:
-    #         await message.channel.send(f"{user_time / 60:.1f} min until you may act again")
-    #     else:
-    #         command = message.content.lower().split(" ")
-    #         if command[0] == "dragon":
-    #             pass
-    #         elif command[0] == "knight":
-    #             pass
+    if channel_id == ANSWER:
+        team = team_from_member(message.author)
+        user = message.author.id
+        result, show_image = hangman.guess(content, user, team)
+        if show_image:
+            await message.channel.send(result, file=discord.File(hangman.get_hang_image(team)))
+        else:
+            await message.channel.send(result)
+        if hangman.check_grand_thonk():
+            await message.channel.send("No team has guesses remaining. Grand Thonk gets a point!")
+        await message.channel.send(hangman.display_word())
     # elif channel_id == TOWER:
     #     if user_time > 0:
     #         timer.deduct_last(message.author.id, 300)
@@ -63,6 +64,10 @@ async def on_message(message):
     #             await message.add_reaction("⏲️")
     # elif content.lower() == "team":
     #     await message.channel.send(f"You are on team {TEAM_NAMES[team_from_member(message.author)]}")
+    elif content.lower() == "check":
+        team = team_from_member(message.author)
+        user = message.author.id
+        await message.channel.send(hangman.check(user, team))
     # elif content.lower() == "time":
     #     if user_time < 0:
     #         await message.channel.send("You may act right now!")
@@ -76,8 +81,8 @@ async def on_message(message):
     #     await message.channel.send(file=discord.File('images/maolog.png'))
 
 
-async def on_tick():
-    await life.on_tick()
+# async def on_tick():
+#     await life.on_tick()
 
 
 # async def update_points():
